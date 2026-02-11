@@ -77,3 +77,39 @@ func (h *Hub) Run() {
 		}
 	}
 }
+
+func (c *Client) ReadPump() {
+	defer func() {
+		c.Hub.Unregister <- c
+		c.Conn.Close()
+	}()
+	for {
+		_, _, err := c.Conn.ReadMessage()
+		if err != nil {
+			break
+		}
+	}
+}
+
+func (c *Client) WritePump() {
+	defer func() {
+		c.Conn.Close()
+	}()
+	for {
+		select {
+		case message, ok := <-c.Send:
+			if !ok {
+				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+			w, err := c.Conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
+			w.Write(message)
+			if err := w.Close(); err != nil {
+				return
+			}
+		}
+	}
+}

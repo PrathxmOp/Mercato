@@ -1,0 +1,77 @@
+package components
+
+import (
+	"fmt"
+	"github.com/prathxm/mercato/internal/db"
+)
+
+templ ItemRow(item db.Item, isShop bool) {
+	<div class={ "flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg shadow-sm mb-2 transition-all duration-300", 
+		templ.KV("opacity-60 bg-slate-50", item.Status == "bought") } 
+		id={ fmt.Sprintf("item-%d", item.ID) }>
+		
+		<div class="flex-grow">
+			<div class="flex items-center gap-2">
+				<span class={ "font-medium text-lg", templ.KV("line-through text-slate-400", item.Status == "bought") }>
+					{ item.Name }
+				</span>
+				if item.Quantity != "" {
+					<span class="text-sm text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+						{ item.Quantity }
+					</span>
+				}
+			</div>
+			if item.Price > 0 {
+				<div class="text-sm text-emerald-600 font-medium mt-1">
+					${ fmt.Sprintf("%.2f", item.Price) }
+				</div>
+			}
+		</div>
+
+		if isShop {
+			if item.Status == "pending" {
+				<form hx-post={ fmt.Sprintf("/shop/buy/%d", item.ID) } hx-swap="none" class="flex items-center gap-2">
+					<div class="relative">
+						<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+						<input type="number" step="0.01" name="price" placeholder="0.00" required
+							class="w-24 pl-6 pr-2 py-1.5 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"/>
+					</div>
+					<button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded transition-colors">
+						<!-- Check Icon -->
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+							<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+						</svg>
+					</button>
+				</form>
+			} else {
+				<span class="text-emerald-600 font-bold flex items-center gap-1">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+					</svg>
+					Bought
+				</span>
+			}
+		} else {
+			// Family View Logic
+			if item.Status == "bought" {
+				<span class="text-slate-400 text-sm italic">Purchased</span>
+			}
+		}
+	</div>
+}
+
+templ ItemList(items []db.Item, isShop bool) {
+	<div id="grocery-list" class="space-y-2">
+		for _, item := range items {
+			@ItemRow(item, isShop)
+		}
+		if len(items) == 0 {
+			<div class="text-center py-10 text-slate-400">
+				<p>No items in the list yet.</p>
+				if !isShop {
+					<p class="text-sm mt-1">Add something above!</p>
+				}
+			</div>
+		}
+	</div>
+}
