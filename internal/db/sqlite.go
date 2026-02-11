@@ -18,6 +18,7 @@ type Family struct {
 	Token     string
 	Name      string
 	ShopToken string
+	Status    string // 'active', 'done'
 }
 
 type Item struct {
@@ -59,6 +60,7 @@ func createTables(db *sql.DB) error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		token TEXT UNIQUE NOT NULL,
 		name TEXT NOT NULL,
+		status TEXT DEFAULT 'active',
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
 
@@ -83,7 +85,14 @@ func createTables(db *sql.DB) error {
 	);
 	`
 	_, err := db.Exec(schema)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Migration: Add status column to families if it doesn't exist (fails silently if already there)
+	_, _ = db.Exec("ALTER TABLE families ADD COLUMN status TEXT DEFAULT 'active'")
+
+	return nil
 }
 
 // CreateFamily creates a new family and its corresponding shop token
@@ -119,19 +128,19 @@ func (d *DB) GetFamilyByToken(token string, isShop bool) (*Family, error) {
 	
 	if isShop {
 		// If using shop token, join tables to get family ID
-		query = `SELECT f.id, f.token, f.name, s.token 
+		query = `SELECT f.id, f.token, f.name, s.token, f.status 
 		         FROM families f 
 		         JOIN shops s ON f.id = s.family_id 
 		         WHERE s.token = ?`
 	} else {
 		// If using family token, we need to fetch the shop token as well
-		query = `SELECT f.id, f.token, f.name, s.token 
+		query = `SELECT f.id, f.token, f.name, s.token, f.status 
 		         FROM families f 
 		         JOIN shops s ON f.id = s.family_id 
 		         WHERE f.token = ?`
 	}
 
-	err := d.QueryRow(query, token).Scan(&f.ID, &f.Token, &f.Name, &f.ShopToken)
+	err := d.QueryRow(query, token).Scan(&f.ID, &f.Token, &f.Name, &f.ShopToken, &f.Status)
 	if err != nil {
 		return nil, err
 	}
@@ -140,11 +149,11 @@ func (d *DB) GetFamilyByToken(token string, isShop bool) (*Family, error) {
 
 func (d *DB) GetFamilyByTokenFromID(familyID int64) (*Family, error) {
 	var f Family
-	query := `SELECT f.id, f.token, f.name, s.token 
+	query := `SELECT f.id, f.token, f.name, s.token, f.status 
 	          FROM families f 
 	          JOIN shops s ON f.id = s.family_id 
 	          WHERE f.id = ?`
-	err := d.QueryRow(query, familyID).Scan(&f.ID, &f.Token, &f.Name, &f.ShopToken)
+	err := d.QueryRow(query, familyID).Scan(&f.ID, &f.Token, &f.Name, &f.ShopToken, &f.Status)
 	if err != nil {
 		return nil, err
 	}
@@ -203,4 +212,26 @@ func (d *DB) UpdateItemStatus(itemID int64, price float64, status string) (*Item
 		return nil, err
 	}
 	return &i, nil
+}
+
+// DeleteItem removes an item from the database
+func (d *DB) DeleteItem(itemID int64) (*Item, error) {
+	// We need the item details to broadcast the deletion to the right room
+	var i Item
+	err := d.QueryRow("SELECT id, family_id, name, quantity, price, status FROM items WHERE id = ?", itemID).Scan(&i.ID, &i.FamilyID, &i.Name, &i.Quantity, &i.Price, &i.Status)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = d.Exec("DELETE FROM items WHERE id = ?", itemID)
+	if err != nil {
+		return nil, err
+	}
+	return &i, nil
+}
+
+// MarkFamilyDone sets the family list status to 'done'
+func (d *DB) MarkFamilyDone(familyID int64) error {
+	_, err := d.Exec("UPDATE families SET status = 'done' WHERE id = ?", familyID)
+	return err
 }

@@ -32,11 +32,15 @@ func main() {
 	mux.HandleFunc("GET /shop/{token}", h.ShopView)
 	mux.HandleFunc("POST /add", h.AddItem)
 	mux.HandleFunc("POST /shop/buy/{id}", h.BuyItem)
+	mux.HandleFunc("POST /shop/unavailable/{id}", h.MarkUnavailable)
+	mux.HandleFunc("POST /shop/complete", h.CompleteList)
+	mux.HandleFunc("DELETE /item/{id}", h.DeleteItem)
 	mux.HandleFunc("GET /ws/{token}", h.ServeWS)
+	mux.HandleFunc("GET /ws/{view}/{token}", h.ServeWS)
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8082"
 	}
 
 	log.Printf("Mercato starting on :%s", port)
