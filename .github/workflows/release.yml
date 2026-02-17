@@ -1,10 +1,6 @@
 name: Release
 
 on:
-  push:
-    branches: [ master ] # Added this line
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       version:
