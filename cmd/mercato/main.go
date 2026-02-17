@@ -1,9 +1,15 @@
 package main
 
 import (
-	"log"
+	"context"
+	"flag"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/prathxm/mercato/internal/db"
 	"github.com/prathxm/mercato/internal/handlers"
@@ -11,17 +17,103 @@ import (
 )
 
 func main() {
-	dbPath := "./data/mercato.db"
+	// Admin Flags
+	delAll := flag.Bool("delall", false, "Delete all data and empty database")
+	showStats := flag.Bool("stats", false, "Show database statistics")
+	listFamilies := flag.Bool("list", false, "List all active families")
+	flag.Parse()
+
+	// Initialize structured logging
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./data/mercato.db"
+	}
+	
 	database, err := db.InitDB(dbPath)
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		slog.Error("Failed to initialize database", "err", err)
+		os.Exit(1)
 	}
 	defer database.Close()
+
+	// Handle Admin Commands
+	if *delAll {
+		slog.Info("Deleting all records as requested by --delall flag...")
+		if err := database.DeleteAll(); err != nil {
+			slog.Error("Failed to delete all data", "err", err)
+			os.Exit(1)
+		}
+		slog.Info("Database cleared successfully.")
+		os.Exit(0)
+	}
+
+	if *showStats {
+		f, i, m, err := database.GetStats()
+		if err != nil {
+			slog.Error("Failed to get database stats", "err", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Mercato Database Statistics:\n")
+		fmt.Printf("- Families: %d\n", f)
+		fmt.Printf("- Items:    %d\n", i)
+		fmt.Printf("- Messages: %d\n", m)
+		os.Exit(0)
+	}
+
+	if *listFamilies {
+		families, err := database.ListFamilies()
+		if err != nil {
+			slog.Error("Failed to list families", "err", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Active Families (%d):\n", len(families))
+		for _, f := range families {
+			fmt.Printf("- [%s] %s (Token: %s)\n", f.Status, f.Name, f.Token)
+		}
+		os.Exit(0)
+	}
 
 	hub := ws.NewHub()
 	go hub.Run()
 
+	// Start background cleanup worker for expired lists
+	go func() {
+		ticker := time.NewTicker(1 * time.Hour)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				count, err := database.CleanupExpiredFamilies()
+				if err != nil {
+					slog.Error("Failed to cleanup expired families", "err", err)
+				} else if count > 0 {
+					slog.Info("Cleaned up expired families", "count", count)
+				}
+			}
+		}
+	}()
+
 	h := handlers.NewHandlers(database, hub)
+	
+	// Initialize i18n
+	localesPath := os.Getenv("LOCALES_PATH")
+	if localesPath == "" {
+		// Try ./locales first
+		if _, err := os.Stat("./locales"); err == nil {
+			localesPath = "./locales"
+		} else if _, err := os.Stat("../locales"); err == nil {
+			// Fallback to parent dir (common if running from bin/)
+			localesPath = "../locales"
+		} else {
+			localesPath = "./locales" // Default to current dir if neither found
+		}
+	}
+	if err := handlers.InitI18n(localesPath); err != nil {
+		slog.Error("Failed to initialize i18n", "err", err, "path", localesPath)
+	}
 
 	mux := http.NewServeMux()
 	
@@ -34,17 +126,59 @@ func main() {
 	mux.HandleFunc("POST /shop/buy/{id}", h.BuyItem)
 	mux.HandleFunc("POST /shop/unavailable/{id}", h.MarkUnavailable)
 	mux.HandleFunc("POST /shop/complete", h.CompleteList)
+	mux.HandleFunc("POST /chat/{view}/{token}/send", h.SendChatMessage)
+	mux.HandleFunc("GET /chat/{view}/{token}/read", h.MarkChatRead)
 	mux.HandleFunc("DELETE /item/{id}", h.DeleteItem)
+	mux.HandleFunc("POST /settings/currency", h.SetCurrency)
+	mux.HandleFunc("POST /settings/family", h.SetFamilySettings)
 	mux.HandleFunc("GET /ws/{token}", h.ServeWS)
 	mux.HandleFunc("GET /ws/{view}/{token}", h.ServeWS)
+
+	// Wrap mux with middleware
+	handler := h.LangMiddleware(mux)
+	handler = securityHeaders(handler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8082"
 	}
 
-	log.Printf("Mercato starting on :%s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatal(err)
+	server := &http.Server{
+		Addr:    ":" + port,
+		Handler: handler,
 	}
+
+	// Graceful shutdown setup
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		slog.Info("Mercato starting", "port", port)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("Server error", "err", err)
+			os.Exit(1)
+		}
+	}()
+
+	<-stop
+	slog.Info("Shutting down Mercato...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		slog.Error("Server forced to shutdown", "err", err)
+	}
+
+	slog.Info("Mercato stopped")
+}
+
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src https://fonts.gstatic.com; connect-src 'self' ws: wss:")
+		next.ServeHTTP(w, r)
+	})
 }

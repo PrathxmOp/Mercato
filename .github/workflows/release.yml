@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. v1.0.0). If empty, will auto-increment patch based on latest tag.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@latest
+
+      - name: Generate templates
+        run: templ generate
+
+      - name: Determine Version
+        id: versioning
+        run: |
+          if [ -z "${{ github.event.inputs.version }}" ]; then
+            # Get latest tag or default to v0.0.0
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            echo "Latest tag: $LATEST_TAG"
+            
+            # Simple increment patch (assumes semver vX.Y.Z)
+            # Remove 'v' if present for calculation
+            VERSION_NUM=${LATEST_TAG#v}
+            IFS='.' read -r major minor patch <<< "$VERSION_NUM"
+            NEW_PATCH=$((patch + 1))
+            VERSION="v$major.$minor.$NEW_PATCH"
+            echo "Auto-incremented version: $VERSION"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+            # Ensure version starts with 'v'
+            if [[ $VERSION != v* ]]; then
+              VERSION="v$VERSION"
+            fi
+            echo "Custom version: $VERSION"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Tag
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag ${{ steps.versioning.outputs.version }}
+          git push origin ${{ steps.versioning.outputs.version }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -8,7 +8,10 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/prathxm/mercato/view/layout"
+import (
+	"github.com/prathxm/mercato/internal/i18n"
+	"github.com/prathxm/mercato/view/layout"
+)
 
 func Home() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -43,7 +46,111 @@ func Home() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex items-center justify-center min-h-[calc(100vh-160px)] px-4 py-8\"><div class=\"w-full max-w-sm\"><div class=\"bg-white rounded-[2rem] shadow-2xl shadow-indigo-100/60 border border-slate-100 overflow-hidden\"><!-- Top accent bar --><div class=\"h-1.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-400\"></div><div class=\"p-8 sm:p-10 text-center\"><!-- Icon --><div class=\"flex justify-center mb-8\"><div class=\"bg-indigo-600 p-5 rounded-[1.25rem] shadow-xl shadow-indigo-200 inline-flex\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-10 w-10 text-white\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z\"></path></svg></div></div><h2 class=\"text-3xl font-black text-slate-900 tracking-tight mb-2\">Smart Grocery Sync</h2><p class=\"text-slate-400 text-sm font-medium leading-relaxed mb-8\">Create a shared list and shop together with your family in real-time.</p><form action=\"/create\" method=\"POST\" class=\"space-y-3\"><div><label for=\"name\" class=\"sr-only\">Family Name</label> <input type=\"text\" name=\"name\" id=\"name\" placeholder=\"Name your family list\" required autocomplete=\"off\" class=\"w-full px-5 py-4 rounded-2xl border-2 border-slate-100 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 bg-slate-50 text-slate-900 font-bold placeholder:text-slate-300 transition-all outline-none text-center text-lg\"></div><button type=\"submit\" class=\"w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-black py-4 px-8 rounded-2xl transition-all shadow-xl shadow-indigo-200 text-base uppercase tracking-wide\">Start My List →</button></form><!-- Feature pills --><div class=\"mt-8 pt-6 border-t border-slate-50 flex items-center justify-center gap-4 flex-wrap\"><span class=\"inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300\"><span class=\"h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block\"></span> Real-time</span> <span class=\"inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300\"><span class=\"h-1.5 w-1.5 rounded-full bg-indigo-400 inline-block\"></span> Shared Access</span> <span class=\"inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300\"><span class=\"h-1.5 w-1.5 rounded-full bg-violet-400 inline-block\"></span> Free</span></div></div></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex items-center justify-center min-h-[calc(100vh-160px)] px-4 py-8\"><div class=\"w-full max-w-sm\"><div class=\"bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl shadow-indigo-100/60 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden transition-all duration-300\"><!-- Top accent bar --><div class=\"h-1.5 bg-gradient-to-r from-blue-500 via-blue-500 to-blue-400\"></div><div class=\"p-8 sm:p-10 text-center\"><!-- Icon --><div class=\"flex justify-center mb-8\"><div class=\"bg-blue-600 p-5 rounded-[1.25rem] shadow-xl shadow-blue-200 inline-flex\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-10 w-10 text-white\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z\"></path></svg></div></div><h2 class=\"text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var3 string
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(i18n.T(i18n.GetLang(ctx), "home.title"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/components/home.templ`, Line: 27, Col: 130}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h2><p class=\"text-slate-400 dark:text-slate-500 text-sm font-medium leading-relaxed mb-8\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(i18n.T(i18n.GetLang(ctx), "home.subtitle"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/components/home.templ`, Line: 29, Col: 51}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p><form action=\"/create\" method=\"POST\" class=\"space-y-3\"><div><label for=\"name\" class=\"sr-only\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(i18n.T(i18n.GetLang(ctx), "home.placeholder"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/components/home.templ`, Line: 34, Col: 89}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</label> <input type=\"text\" name=\"name\" id=\"name\" placeholder=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(i18n.T(i18n.GetLang(ctx), "home.placeholder"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/components/home.templ`, Line: 39, Col: 68}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" required autocomplete=\"off\" class=\"w-full px-5 py-4 rounded-2xl border-2 border-slate-100 dark:border-slate-800 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/20 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-bold placeholder:text-slate-300 dark:placeholder:text-slate-700 transition-all outline-none text-center text-lg\"></div><button type=\"submit\" class=\"w-full bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400 active:scale-[0.98] text-white font-black py-4 px-8 rounded-2xl transition-all shadow-xl shadow-blue-200 dark:shadow-none text-base uppercase tracking-wide\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(i18n.T(i18n.GetLang(ctx), "home.cta"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/components/home.templ`, Line: 47, Col: 47}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</button></form><!-- Feature pills --><div class=\"mt-8 pt-6 border-t border-slate-50 dark:border-slate-800 transition-colors flex items-center justify-center gap-4 flex-wrap\"><span class=\"inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300\"><span class=\"h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block\"></span> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(i18n.T(i18n.GetLang(ctx), "home.realtime"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/components/home.templ`, Line: 55, Col: 52}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span> <span class=\"inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300\"><span class=\"h-1.5 w-1.5 rounded-full bg-blue-400 inline-block\"></span> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(i18n.T(i18n.GetLang(ctx), "home.shared"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/components/home.templ`, Line: 59, Col: 50}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</span> <span class=\"inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300\"><span class=\"h-1.5 w-1.5 rounded-full bg-cyan-400 inline-block\"></span> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(i18n.T(i18n.GetLang(ctx), "home.free"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/components/home.templ`, Line: 63, Col: 48}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</span></div></div></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

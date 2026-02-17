@@ -1,0 +1,74 @@
+{
+  "home": {
+    "title": "Smart Grocery Sync",
+    "subtitle": "Create a shared list and shop together with your family in real-time.",
+    "placeholder": "Name your family list",
+    "cta": "Start My List →",
+    "realtime": "Real-time",
+    "shared": "Shared Access",
+    "free": "Free"
+  },
+  "list": {
+    "title": "%s's List",
+    "live_sync": "Live sync active",
+    "complete": "Shopping Complete",
+    "total_spent": "Total Bill",
+    "share_link": "Share Shop Link",
+    "share_message": "Hey! Here's our shopping list on Mercato: %s",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "add_placeholder": "What do we need?",
+    "category_placeholder": "Category (Produce, Dairy...)",
+    "qty_placeholder": "Qty",
+    "add_cta": "Add",
+    "read_only": "Shopping is complete. This list is now read-only.",
+    "empty": "Your list is empty",
+    "empty_cta": "Add your first item above",
+    "paid": "%s"
+  },
+  "shop": {
+    "title": "%s",
+    "syncing": "Syncing with family",
+    "all_complete": "All Complete",
+    "total_spent": "Total Bill",
+    "shopping": "Shopping",
+    "done": "Done",
+    "bought": "Bought",
+    "unavailable": "Not Available",
+    "empty_cta": "Nothing to shop for yet"
+  },
+  "chat": {
+    "title": "Chat",
+    "placeholder": "Message...",
+    "send": "Send",
+    "seen": "Seen",
+    "sent": "Sent",
+    "today": "Today"
+  },
+  "footer": {
+    "rights": "© 2026 Mercato. All rights reserved.",
+    "built_with": "Built with Passion"
+  },
+  "settings": {
+    "title": "Settings",
+    "expiry": "List Expiry",
+    "expiry_desc": "Automatically delete this list after a set time",
+    "lang": "Language",
+    "lang_auto": "Auto (Browser)",
+    "save": "Save Settings",
+    "expiry_options": {
+      "1h": "1 Hour",
+      "3h": "3 Hours",
+      "6h": "6 Hours",
+      "1d": "1 Day",
+      "3d": "3 Days",
+      "1w": "1 Week",
+      "never": "Never"
+    }
+  },
+  "error": {
+    "not_found_title": "Lost in the Aisles?",
+    "not_found_desc": "The list or page you're looking for doesn't exist or has expired.",
+    "back_home": "Back to Home"
+  }
+}

@@ -1,0 +1,181 @@
+package components
+
+import (
+	"fmt"
+	"github.com/prathxm/mercato/internal/db"
+	"github.com/prathxm/mercato/internal/i18n"
+)
+
+templ ChatDrawer(family *db.Family, messages []db.Message, isShop bool) {
+	<div id="chat-drawer" class="fixed inset-y-0 right-0 w-80 bg-white dark:bg-slate-900 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 flex flex-col border-l border-slate-200 dark:border-slate-800">
+		<!-- Header -->
+		<div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/50 transition-colors">
+			<h3 class="font-black text-slate-800 dark:text-white flex items-center gap-2">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+					<path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
+				</svg>
+				{ i18n.T(i18n.GetLang(ctx), "chat.title") }
+			</h3>
+			<button onclick="document.getElementById('chat-drawer').classList.add('translate-x-full'); document.getElementById('chat-overlay').classList.add('hidden')" class="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+			</button>
+		</div>
+
+		<!-- Messages area -->
+		<div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50/50 dark:bg-slate-950/20 scroll-smooth transition-colors" 
+		     hx-get={ fmt.Sprintf("/chat/%s/%s/read", func() string { if isShop { return "shop" } else { return "family" } }(), func() string { if isShop { return family.ShopToken } else { return family.Token } }()) } 
+		     hx-trigger="click from:#chat-drawer, chat-opened" hx-swap="none">
+			@MessagesList(messages, isShop)
+			<div id="chat-bottom"></div>
+		</div>
+
+		<!-- Quick Replies -->
+		<div class="px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-2 transition-colors">
+			for _, reply := range []string{"Got it!", "On my way", "Almost done", "Price updated"} {
+				<button hx-post={ fmt.Sprintf("/chat/%s/%s/send", func() string { if isShop { return "shop" } else { return "family" } }(), func() string { if isShop { return family.ShopToken } else { return family.Token } }()) }
+				        hx-vals={ fmt.Sprintf(`{"content": "%s"}`, reply) }
+				        hx-swap="none"
+				        class="inline-block px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-100 dark:border-blue-800/60 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors active:scale-95 leading-none">
+					{ reply }
+				</button>
+			}
+		</div>
+
+		<!-- Input area -->
+		<div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
+			<form hx-post={ fmt.Sprintf("/chat/%s/%s/send", func() string { if isShop { return "shop" } else { return "family" } }(), func() string { if isShop { return family.ShopToken } else { return family.Token } }()) } 
+			      hx-on::after-request="this.reset()" hx-swap="none" class="flex gap-2">
+				<input type="text" name="content" placeholder={ i18n.T(i18n.GetLang(ctx), "chat.placeholder") } required
+					class="flex-1 px-4 py-2.5 text-sm border border-slate-100 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-900/40 focus:border-blue-400 dark:focus:border-blue-600 outline-none transition-all bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 font-medium"/>
+				<button type="submit" class="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400 text-white p-2.5 rounded-2xl transition-all active:scale-90 shadow-lg shadow-blue-100 dark:shadow-none flex-shrink-0">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor">
+						<path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+					</svg>
+				</button>
+			</form>
+		</div>
+	</div>
+
+	<!-- Overlay -->
+	<div id="chat-overlay" onclick="document.getElementById('chat-drawer').classList.add('translate-x-full'); this.classList.add('hidden')" 
+		class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm hidden z-40"></div>
+}
+
+ templ MessagesList(messages []db.Message, isShop bool) {
+	for _, group := range GroupMessagesByDate(messages, i18n.GetLang(ctx)) {
+		<div class="flex justify-center my-4">
+			<span class="px-3 py-1 rounded-full bg-slate-200/50 dark:bg-slate-800/80 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-colors">{ group.Date }</span>
+		</div>
+		for _, msg := range group.Messages {
+			@MessageBubble(msg, isShop)
+		}
+	}
+}
+
+templ MessageBubble(msg db.Message, isShop bool) {
+	{{ isMe := (isShop && msg.Sender == "shop") || (!isShop && msg.Sender == "family") }}
+	<div class={ "flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300", templ.KV("self-end items-end", isMe), templ.KV("self-start items-start", !isMe) }>
+		<div class={ "px-4 py-2.5 max-w-[240px] rounded-2xl text-sm shadow-sm transition-all duration-300", 
+			templ.KV("bg-blue-600 dark:bg-blue-500 text-white rounded-tr-none shadow-blue-100/50 dark:shadow-none", isMe),
+			templ.KV("bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-tl-none", !isMe) }>
+			{ msg.Content }
+		</div>
+		<div class="flex items-center gap-1.5 mt-1 px-1">
+			<span class="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+				{ formatMessageTime(msg.CreatedAt) }
+			</span>
+			if isMe {
+				if msg.IsRead {
+					<span class="text-[9px] text-blue-500 dark:text-blue-400 font-black uppercase">{ i18n.T(i18n.GetLang(ctx), "chat.seen") }</span>
+				} else {
+					<span class="text-[9px] text-slate-300 dark:text-slate-700 font-black uppercase">{ i18n.T(i18n.GetLang(ctx), "chat.sent") }</span>
+				}
+			}
+		</div>
+	</div>
+}
+
+func formatMessageTime(createdAt string) string {
+	// sqlite datetime is "YYYY-MM-DD HH:MM:SS"
+	if len(createdAt) >= 16 {
+		return createdAt[11:16]
+	}
+	return ""
+}
+
+type MessageGroup struct {
+	Date     string
+	Messages []db.Message
+}
+
+func GroupMessagesByDate(messages []db.Message, lang string) []MessageGroup {
+	var groups []MessageGroup
+	if len(messages) == 0 {
+		return groups
+	}
+
+	for _, m := range messages {
+		date := i18n.T(lang, "chat.today")
+		if len(m.CreatedAt) >= 10 {
+			date = m.CreatedAt[0:10] // Simplistic for now
+		}
+		
+		if len(groups) == 0 || groups[len(groups)-1].Date != date {
+			groups = append(groups, MessageGroup{Date: date, Messages: []db.Message{m}})
+		} else {
+			groups[len(groups)-1].Messages = append(groups[len(groups)-1].Messages, m)
+		}
+	}
+	return groups
+}
+
+templ NotificationBell(unreadCount int) {
+	<div id="chat-notification-bell" class="relative group">
+		<button onclick="document.getElementById('chat-drawer').classList.remove('translate-x-full'); document.getElementById('chat-overlay').classList.remove('hidden'); setTimeout(() => { const el = document.getElementById('chat-messages'); el.scrollTo(0, el.scrollHeight); el.dispatchEvent(new Event('chat-opened')); }, 50);"
+			class={ "relative p-2 rounded-xl transition-all border", 
+			templ.KV("bg-blue-50 dark:bg-blue-900/30 border-blue-100 dark:border-blue-800/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50", unreadCount > 0),
+			templ.KV("bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/40 text-slate-400 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800/60", unreadCount == 0) }>
+			
+			<svg xmlns="http://www.w3.org/2000/svg" class={ "h-6 w-6", templ.KV("animate-[ring_2s_ease-in-out_infinite]", unreadCount > 0) } fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+			</svg>
+
+			if unreadCount > 0 {
+				<span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-black text-white ring-4 ring-white dark:ring-slate-900 transition-all">
+					{ fmt.Sprintf("%d", unreadCount) }
+				</span>
+			}
+		</button>
+		
+		<style>
+			@keyframes ring {
+				0% { transform: rotate(0); }
+				1% { transform: rotate(30deg); }
+				3% { transform: rotate(-28deg); }
+				5% { transform: rotate(34deg); }
+				7% { transform: rotate(-32deg); }
+				9% { transform: rotate(30deg); }
+				11% { transform: rotate(-28deg); }
+				13% { transform: rotate(26deg); }
+				15% { transform: rotate(-24deg); }
+				17% { transform: rotate(22deg); }
+				19% { transform: rotate(-20deg); }
+				21% { transform: rotate(18deg); }
+				23% { transform: rotate(-16deg); }
+				25% { transform: rotate(14deg); }
+				27% { transform: rotate(-12deg); }
+				29% { transform: rotate(10deg); }
+				31% { transform: rotate(-8deg); }
+				33% { transform: rotate(6deg); }
+				35% { transform: rotate(-4deg); }
+				37% { transform: rotate(2deg); }
+				39% { transform: rotate(-1deg); }
+				41% { transform: rotate(1deg); }
+				43% { transform: rotate(0); }
+				100% { transform: rotate(0); }
+			}
+		</style>
+	</div>
+}

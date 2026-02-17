@@ -3,7 +3,9 @@ package components
 import (
 	"github.com/prathxm/mercato/view/layout"
 	"github.com/prathxm/mercato/internal/db"
+	"github.com/prathxm/mercato/internal/i18n"
 	"fmt"
+	"net/url"
 )
 
 script copyShopLink(token string) {
@@ -49,32 +51,32 @@ script copyShopLink(token string) {
 }
 
 
-templ FamilyView(family *db.Family, items []db.Item) {
+templ FamilyView(family *db.Family, items []db.Item, messages []db.Message, unreadCount int) {
 	@layout.Base(family.Name + " List") {
 		<!-- BUG FIX: ws-connect is on the outer wrapper so WS OOB swaps update
 		     #grocery-list in-place. The list is rendered once here (server-side).
 		     WS pushes only use hx-swap-oob="true" on the target element, so no duplicates. -->
 		<div hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/%s", family.Token) }>
-			<div class="max-w-2xl mx-auto space-y-6">
+			<div class="max-w-2xl mx-auto space-y-6 px-4 sm:px-0 pb-20">
 
 				<!-- Page Header -->
-				<div class="flex flex-col gap-4 pb-6 border-b border-slate-200">
+				<div class="flex flex-col gap-4 py-8 border-b border-slate-200 dark:border-slate-800 transition-colors">
 					<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
 						<div class="space-y-1 min-w-0">
-							<h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight truncate">{ family.Name }'s List</h2>
-							<p class="text-slate-500 font-medium flex items-center gap-1.5 text-sm">
-								<span class="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
-								Live sync active
+							<h2 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight truncate">{ i18n.T(i18n.GetLang(ctx), "list.title", family.Name) }</h2>
+							<p class="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1.5 text-sm">
+								<span class="flex h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse flex-shrink-0"></span>
+								{ i18n.T(i18n.GetLang(ctx), "list.live_sync") }
 							</p>
 							<div id="list-status-badge">
 								if family.Status == "done" {
-									<span class="inline-flex items-center gap-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-xl border border-indigo-200">
-										Shopping Complete
+									<span class="inline-flex items-center gap-1.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800/60 transition-colors">
+										{ i18n.T(i18n.GetLang(ctx), "list.complete") }
 									</span>
 								}
 							</div>
-							<div id="total-price-container" class="mt-2 text-indigo-600 font-bold text-sm">
-								Total Spent: <span id="total-price">${ func() string {
+							<div id="total-price-container" class="mt-2 text-blue-600 dark:text-blue-400 font-bold text-sm">
+								{ i18n.T(i18n.GetLang(ctx), "list.total_spent") }: <span id="total-price">{ family.Currency }{ func() string {
 									var total float64
 									for _, item := range items {
 										if item.Status == "bought" {
@@ -86,19 +88,44 @@ templ FamilyView(family *db.Family, items []db.Item) {
 							</div>
 						</div>
 
-						<!-- Share card -->
-						<div class="bg-indigo-50 border border-indigo-100 px-4 py-3 rounded-2xl flex flex-col gap-2 sm:min-w-[220px] flex-shrink-0">
-							<span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1">
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-									<path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"/>
-								</svg>
-								Share Shop Link
-							</span>
-							<div class="flex items-center justify-between gap-2">
-								<code class="text-xs font-mono text-indigo-800 truncate flex-1 min-w-0">/shop/{ family.ShopToken }</code>
+						<div class="flex items-center gap-2">
+							<div class="flex items-center gap-2">
+								<!-- Settings Button -->
+								<button onclick="document.getElementById('settings-drawer').classList.remove('translate-x-full'); document.getElementById('settings-overlay').classList.remove('hidden')"
+									class="p-2.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:border-blue-200 dark:hover:border-blue-500 rounded-xl shadow-sm transition-all"
+									title={ i18n.T(i18n.GetLang(ctx), "settings.title") }>
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+									</svg>
+								</button>
+
+								@NotificationBell(unreadCount)
+							</div>
+						</div>
+					</div>
+
+					<!-- Share card -->
+					<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/60 px-4 py-3 rounded-2xl flex flex-col gap-2 sm:min-w-[220px] transition-colors">
+						<span class="text-[10px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+								<path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"/>
+							</svg>
+							{ i18n.T(i18n.GetLang(ctx), "list.share_link") }
+						</span>
+						<div class="flex items-center justify-between gap-2">
+							<code class="text-xs font-mono text-blue-800 dark:text-blue-300 truncate flex-1 min-w-0">/shop/{ family.ShopToken }</code>
+							<div class="flex items-center gap-1.5 flex-shrink-0">
+								<a href={ templ.SafeURL(fmt.Sprintf("https://wa.me/?text=%s", url.QueryEscape(i18n.T(i18n.GetLang(ctx), "list.share_message", fmt.Sprintf("%s/shop/%s", "https://mercato.app", family.ShopToken))))) }
+									target="_blank"
+									class="p-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm active:scale-95 transition-all flex items-center justify-center">
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+										<path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.417-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884 0 2.225.569 3.846 1.74 5.228l-1.018 3.721 3.757-.981zm12.352-5.918c-.372-.187-2.202-1.086-2.546-1.211-.344-.125-.595-.187-.847.188-.251.375-.972 1.251-1.192 1.501-.22.25-.44.281-.812.094-.372-.187-1.569-.579-2.99-1.846-1.106-.987-1.854-2.205-2.071-2.58-.217-.375-.023-.578.164-.764.167-.167.372-.438.56-.656.187-.219.251-.375.375-.625s.063-.469-.031-.656c-.094-.187-.847-2.062-1.161-2.812-.303-.733-.615-.656-.847-.656h-.72c-.251 0-.658.094-1.001.469-.344.375-1.315 1.282-1.315 3.125 0 1.844 1.346 3.626 1.533 3.876.187.25 2.649 4.045 6.417 5.671 1.053.454 1.705.659 2.288.844.894.284 1.708.243 2.351.147.717-.107 2.202-.906 2.515-1.781.314-.875.314-1.625.22-1.781-.094-.156-.344-.25-.717-.438z"/>
+									</svg>
+								</a>
 								<button onclick={ copyShopLink(family.ShopToken) }
-									class="text-[11px] font-bold bg-white text-indigo-600 px-2.5 py-1 rounded-lg border border-indigo-200 shadow-sm active:scale-95 transition-all flex-shrink-0 disabled:opacity-50">
-									Copy
+									class="text-[11px] font-bold bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 px-2.5 py-1.5 rounded-lg border border-blue-200 dark:border-blue-700 shadow-sm active:scale-95 transition-all flex-shrink-0 disabled:opacity-50 h-8 flex items-center">
+									{ i18n.T(i18n.GetLang(ctx), "list.copy") }
 								</button>
 							</div>
 						</div>
@@ -106,115 +133,288 @@ templ FamilyView(family *db.Family, items []db.Item) {
 				</div>
 
 				<!-- Add Item Form — sticky below header -->
-				<div id="add-item-form-container" class="bg-white rounded-2xl shadow-lg shadow-slate-200/60 border border-slate-100 p-2 sticky top-[73px] z-10">
+				<div id="add-item-form-container" class="bg-white dark:bg-slate-900 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-slate-100 dark:border-slate-800 p-2 sticky top-4 z-10 transition-all">
 					if family.Status != "done" {
 						<form hx-post="/add" hx-swap="none" hx-on::after-request="this.reset()" class="flex flex-col sm:flex-row gap-2">
 							<input type="hidden" name="token" value={ family.Token }/>
-							<!-- Item name — full width on mobile, flex-grow on desktop -->
-							<input type="text" name="name" placeholder="What do we need?" required
-								class="flex-[3] min-w-0 px-4 py-3.5 rounded-xl border border-transparent focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 text-slate-900 font-medium placeholder:text-slate-300 text-base transition-all outline-none bg-slate-50"/>
-							<!-- Qty + Submit row always horizontal -->
-							<div class="flex gap-2">
-								<input type="text" name="quantity" placeholder="Qty"
-									class="w-20 sm:w-24 px-3 py-3.5 rounded-xl border border-transparent focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-slate-50 text-slate-700 font-semibold transition-all outline-none text-center"/>
+							
+							<!-- Item name -->
+							<input type="text" name="name" placeholder={ i18n.T(i18n.GetLang(ctx), "list.add_placeholder") } required
+								class="flex-[4] min-w-0 px-4 py-3.5 rounded-xl border border-transparent focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 text-slate-900 dark:text-white font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600 text-base transition-all outline-none bg-slate-50 dark:bg-slate-800/50"/>
+							
+							<!-- Category -->
+							<input type="text" name="category" placeholder={ i18n.T(i18n.GetLang(ctx), "list.category_placeholder") }
+								class="flex-[2] px-4 py-3.5 rounded-xl border border-transparent focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 font-medium transition-all outline-none"/>
+							
+							<!-- Qty + Submit -->
+							<div class="flex gap-2 flex-1">
+								<input type="text" name="quantity" placeholder={ i18n.T(i18n.GetLang(ctx), "list.qty_placeholder") }
+									class="w-16 sm:w-20 px-3 py-3.5 rounded-xl border border-transparent focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 font-semibold transition-all outline-none text-center"/>
 								<button type="submit"
-									class="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-black px-6 py-3.5 rounded-xl transition-all shadow-md shadow-indigo-200 text-sm uppercase tracking-wide">
-									Add
+									class="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black px-4 py-3.5 rounded-xl transition-all shadow-md shadow-blue-200 dark:shadow-none text-sm uppercase tracking-wide">
+									{ i18n.T(i18n.GetLang(ctx), "list.add_cta") }
 								</button>
 							</div>
 						</form>
 					} else {
-						<div class="text-center py-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-							<p class="text-slate-500 font-semibold text-sm">Shopping is complete. This list is now read-only.</p>
+						<div class="text-center py-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 transition-colors">
+							<p class="text-slate-500 dark:text-slate-500 font-semibold text-sm">{ i18n.T(i18n.GetLang(ctx), "list.read_only") }</p>
 						</div>
 					}
 				</div>
 
 				<!-- Item List — rendered once; WS updates swap individual rows via OOB -->
 				<div>
-					@ItemList(items, false, family.Status == "done")
+					@ItemList(items, false, family.Status == "done", family.Currency)
 				</div>
 
+				@ChatDrawer(family, messages, false)
+			</div>
+		</div>
+
+		<!-- Settings Drawer (Hidden by default) -->
+		<div id="settings-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-[60]" onclick="this.classList.add('hidden'); document.getElementById('settings-drawer').classList.add('translate-x-full')"></div>
+		<div id="settings-drawer" class="fixed right-0 top-0 h-full w-full sm:w-[380px] bg-white dark:bg-slate-950 shadow-2xl z-[70] transform translate-x-full transition-transform duration-300 ease-out border-l border-slate-100 dark:border-slate-800 flex flex-col">
+			<div class="p-6 border-b border-slate-50 dark:border-slate-900 flex items-center justify-between">
+				<h2 class="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+					<div class="p-2 bg-blue-50 dark:bg-blue-900/40 rounded-xl text-blue-500">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+							<path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+						</svg>
+					</div>
+					{ i18n.T(i18n.GetLang(ctx), "settings.title") }
+				</h2>
+				<button onclick="document.getElementById('settings-drawer').classList.add('translate-x-full'); document.getElementById('settings-overlay').classList.add('hidden')"
+					class="p-2 text-slate-400 hover:text-rose-500 bg-slate-50 dark:bg-slate-900 rounded-xl transition-colors">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+					</svg>
+				</button>
+			</div>
+
+			<div class="flex-grow overflow-y-auto p-6 space-y-8">
+				<!-- Settings Form -->
+				<form hx-post="/settings/family" hx-swap="none" class="space-y-8">
+					<input type="hidden" name="token" value={ family.Token }/>
+					
+					<!-- Language & Currency Section -->
+					<div class="space-y-4">
+						<h3 class="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest pl-1">Localization</h3>
+						
+						<!-- Currency -->
+						<div class="space-y-2">
+							<label class="text-sm font-bold text-slate-700 dark:text-slate-200 block pl-1">Currency Symbol</label>
+							<select name="currency" hx-post="/settings/currency" hx-trigger="change" hx-swap="none"
+								class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-400 transition-all appearance-none cursor-pointer">
+								<option value="₹" selected?={ family.Currency == "₹" }>₹ INR (India)</option>
+								<option value="$" selected?={ family.Currency == "$" }>$ USD (USA)</option>
+								<option value="€" selected?={ family.Currency == "€" }>€ EUR (Europe)</option>
+								<option value="£" selected?={ family.Currency == "£" }>£ GBP (UK)</option>
+							</select>
+						</div>
+
+						<!-- Language -->
+						<div class="space-y-2">
+							<label class="text-sm font-bold text-slate-700 dark:text-slate-200 block pl-1">{ i18n.T(i18n.GetLang(ctx), "settings.lang") }</label>
+							<select name="lang"
+								class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-400 transition-all appearance-none cursor-pointer">
+								<option value="auto" selected?={ family.Language == "auto" }>{ i18n.T(i18n.GetLang(ctx), "settings.lang_auto") }</option>
+								<option value="en" selected?={ family.Language == "en" }>English</option>
+								<option value="hi" selected?={ family.Language == "hi" }>Hindi</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="h-px bg-slate-50 dark:bg-slate-900"></div>
+
+					<!-- Privacy & Expiry Section -->
+					<div class="space-y-4">
+						<h3 class="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest pl-1">Privacy & Lifespan</h3>
+						
+						<!-- Expiry -->
+						<div class="space-y-2">
+							<label class="text-sm font-bold text-slate-700 dark:text-slate-200 block pl-1">{ i18n.T(i18n.GetLang(ctx), "settings.expiry") }</label>
+							<p class="text-[11px] text-slate-400 dark:text-slate-500 pl-1 mb-2">{ i18n.T(i18n.GetLang(ctx), "settings.expiry_desc") }</p>
+							<select name="expiry"
+								class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-400 transition-all appearance-none cursor-pointer">
+								<option value="1" selected?={ family.ExpiryHours == 1 }>{ i18n.T(i18n.GetLang(ctx), "settings.expiry_options.1h") }</option>
+								<option value="3" selected?={ family.ExpiryHours == 3 }>{ i18n.T(i18n.GetLang(ctx), "settings.expiry_options.3h") }</option>
+								<option value="6" selected?={ family.ExpiryHours == 6 }>{ i18n.T(i18n.GetLang(ctx), "settings.expiry_options.6h") }</option>
+								<option value="24" selected?={ family.ExpiryHours == 24 }>{ i18n.T(i18n.GetLang(ctx), "settings.expiry_options.1d") }</option>
+								<option value="72" selected?={ family.ExpiryHours == 72 }>{ i18n.T(i18n.GetLang(ctx), "settings.expiry_options.3d") }</option>
+								<option value="168" selected?={ family.ExpiryHours == 168 }>{ i18n.T(i18n.GetLang(ctx), "settings.expiry_options.1w") }</option>
+								<option value="-1" selected?={ family.ExpiryHours == -1 }>{ i18n.T(i18n.GetLang(ctx), "settings.expiry_options.never") }</option>
+							</select>
+						</div>
+					</div>
+
+					<!-- Bottom Action -->
+					<div class="pt-6">
+						<button type="submit" 
+							class="w-full bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-500 active:scale-95 text-white py-4 rounded-2xl font-black text-base shadow-xl shadow-blue-100 dark:shadow-none transition-all flex items-center justify-center gap-2">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+								<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+							</svg>
+							{ i18n.T(i18n.GetLang(ctx), "settings.save") }
+						</button>
+					</div>
+				</form>
 			</div>
 		</div>
 	}
 }
 
-templ ShopView(family *db.Family, items []db.Item) {
+templ ShopView(family *db.Family, items []db.Item, messages []db.Message, unreadCount int) {
 	@layout.Base(family.Name + " Shop") {
 		<div hx-ext="ws" ws-connect={ fmt.Sprintf("/ws/shop/%s", family.Token) }>
-			<div class="max-w-2xl mx-auto space-y-6">
-
+			<div class="max-w-2xl mx-auto px-1 sm:px-0">
 				<!-- Page Header -->
-				<div class="pb-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-					<div>
-						<h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">{ family.Name }</h2>
-						<p class="text-slate-500 font-medium flex items-center gap-1.5 mt-1 text-sm">
-							<span class="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse flex-shrink-0"></span>
-							Syncing with family
-						</p>
-						<div id="list-status-badge">
-							if family.Status == "done" {
-								<span class="inline-flex items-center gap-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-xl border border-indigo-200">
-									Shopping Complete
+				<div class="mb-8 pt-2">
+					<div class="flex flex-col gap-5">
+						<div class="flex items-start justify-between gap-4">
+							<div class="space-y-1.5 min-w-0">
+								<h2 class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight truncate">
+									{ i18n.T(i18n.GetLang(ctx), "shop.title", family.Name) }
+								</h2>
+								<div class="flex flex-wrap items-center gap-3">
+									<p class="text-slate-500 dark:text-slate-400 font-bold flex items-center gap-1.5 text-[10px] uppercase tracking-wider bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg">
+										<span class="flex h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400 animate-pulse flex-shrink-0"></span>
+										{ i18n.T(i18n.GetLang(ctx), "shop.syncing") }
+									</p>
+									<div id="list-status-badge">
+										if family.Status == "done" {
+											<span class="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-black px-2.5 py-1 rounded-lg border border-emerald-100 dark:border-emerald-800/60 uppercase tracking-wider">
+												{ i18n.T(i18n.GetLang(ctx), "list.complete") }
+											</span>
+										}
+									</div>
+								</div>
+							</div>
+							@NotificationBell(unreadCount)
+						</div>
+
+						<!-- Action Bar -->
+						<div class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-900/80 backdrop-blur-sm p-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none">
+							<!-- Stats -->
+							<div class="flex items-center gap-6">
+								<div class="text-center sm:text-left">
+									<p class="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-0.5">{ i18n.T(i18n.GetLang(ctx), "shop.shopping") }</p>
+									<p class="text-xl font-black text-slate-900 dark:text-white tabular-nums" id="shopping-count">{ fmt.Sprintf("%d", len(items)) }</p>
+								</div>
+								<div class="w-px h-6 bg-slate-100 dark:bg-slate-800"></div>
+								<div class="text-center sm:text-left">
+									<p class="text-[9px] font-black text-emerald-500 dark:text-emerald-500/80 uppercase tracking-widest mb-0.5">{ i18n.T(i18n.GetLang(ctx), "shop.done") }</p>
+									<p class="text-xl font-black text-emerald-600 dark:text-emerald-500 tabular-nums" id="done-count">
+										{ func() string {
+											count := 0
+											for _, item := range items {
+												if item.Status == "bought" {
+													count++
+												}
+											}
+											return fmt.Sprintf("%d", count)
+										}() }
+									</p>
+								</div>
+								<div class="w-px h-6 bg-slate-100 dark:bg-slate-800 hidden sm:block"></div>
+								<div class="hidden sm:block">
+									<p class="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-0.5">{ i18n.T(i18n.GetLang(ctx), "shop.total_spent") }</p>
+									<p class="text-xl font-black text-slate-900 dark:text-white tabular-nums" id="total-price">
+										<span class="text-blue-500 dark:text-blue-400 text-sm font-bold mr-0.5">{ family.Currency }</span>{ func() string {
+											var total float64
+											for _, item := range items {
+												if item.Status == "bought" {
+													total += item.Price
+												}
+											}
+											return fmt.Sprintf("%.2f", total)
+										}() }
+									</p>
+								</div>
+							</div>
+
+							<!-- CTA -->
+							<div id="shop-actions-container">
+								if family.Status != "done" {
+									<button hx-post="/shop/complete" hx-vals={ fmt.Sprintf(`{"token": "%s"}`, family.ShopToken) } hx-swap="none"
+										class="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400 active:scale-95 text-white font-black px-5 py-3 rounded-2xl transition-all shadow-lg shadow-blue-200/50 dark:shadow-none text-xs uppercase tracking-wider flex items-center gap-2">
+										<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+											<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+										</svg>
+										{ i18n.T(i18n.GetLang(ctx), "shop.all_complete") }
+									</button>
+								}
+							</div>
+						</div>
+
+						<!-- Total footer for mobile -->
+						<div class="sm:hidden bg-slate-50 dark:bg-slate-950/50 rounded-2xl p-4 flex items-center justify-between border border-slate-100 dark:border-slate-800/60">
+							<p class="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">{ i18n.T(i18n.GetLang(ctx), "shop.total_spent") }</p>
+							<p class="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+								<span class="text-blue-500 dark:text-blue-400 text-base font-bold mr-1">{ family.Currency }</span>
+								<span id="total-price-mobile">
+									{ func() string {
+										var total float64
+										for _, item := range items {
+											if item.Status == "bought" {
+												total += item.Price
+											}
+										}
+										return fmt.Sprintf("%.2f", total)
+									}() }
 								</span>
-							}
-						</div>
-					</div>
-					<div class="flex flex-col items-end gap-1">
-						<div id="shop-actions-container">
-							if family.Status != "done" {
-								<button hx-post="/shop/complete" hx-vals={ fmt.Sprintf(`{"token": "%s"}`, family.ShopToken) } hx-swap="none"
-									class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-indigo-100 text-sm flex items-center gap-2">
-									<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-										<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-									</svg>
-									All Complete
-								</button>
-							}
-						</div>
-						<div id="total-price-container" class="text-right">
-							<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Spent</p>
-							<p class="text-xl font-black text-emerald-600" id="total-price">
-								${ func() string {
-									var total float64
-									for _, item := range items {
-										if item.Status == "bought" {
-											total += item.Price
-										}
-									}
-									return fmt.Sprintf("%.2f", total)
-								}() }
-							</p>
-						</div>
-					</div>
-					<!-- Progress summary -->
-					<div class="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 flex items-center gap-3 self-start sm:self-auto">
-						<div class="text-center">
-							<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Shopping</p>
-							<p class="text-xl font-black text-slate-700" id="shopping-count">{ fmt.Sprintf("%d", len(items)) }</p>
-						</div>
-						<div class="w-px h-8 bg-slate-200"></div>
-						<div class="text-center">
-							<p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Done</p>
-							<p class="text-xl font-black text-emerald-600" id="done-count">
-								{ func() string {
-									count := 0
-									for _, item := range items {
-										if item.Status == "bought" {
-											count++
-										}
-									}
-									return fmt.Sprintf("%d", count)
-								}() }
 							</p>
 						</div>
 					</div>
 				</div>
 
-				<!-- Item List — rendered once; WS updates swap rows via OOB -->
-				@ItemList(items, true, family.Status == "done")
+				<!-- Item List -->
+				<div id="shop-items-container" class="pb-24">
+					@ItemList(items, true, family.Status == "done", family.Currency)
+				</div>
 
+				@ChatDrawer(family, messages, true)
+			</div>
+		</div>
+	}
+}
+
+templ NotFound() {
+	@layout.Base("404 Not Found") {
+		<div class="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
+			<div class="relative mb-8">
+				<!-- Animated 404 Background -->
+				<div class="absolute inset-0 bg-blue-500/20 dark:bg-blue-400/10 blur-3xl rounded-full scale-150 animate-pulse"></div>
+				
+				<!-- Icon / Illustration -->
+				<div class="relative bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 p-8 rounded-[40px] shadow-2xl shadow-blue-100 dark:shadow-none transition-all">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-blue-500 dark:text-blue-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" class="opacity-30"/>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+					</svg>
+					
+					<div class="absolute -bottom-4 -right-4 bg-rose-500 text-white text-xs font-black px-4 py-2 rounded-2xl shadow-lg border-4 border-white dark:border-slate-900 rotate-12">
+						404
+					</div>
+				</div>
+			</div>
+
+			<div class="max-w-md space-y-4">
+				<h2 class="text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+					{ i18n.T(i18n.GetLang(ctx), "error.not_found_title") }
+				</h2>
+				<p class="text-slate-500 dark:text-slate-400 font-medium text-lg">
+					{ i18n.T(i18n.GetLang(ctx), "error.not_found_desc") }
+				</p>
+			</div>
+
+			<div class="mt-12">
+				<a href="/" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black px-8 py-4 rounded-2xl transition-all shadow-xl shadow-blue-200 dark:shadow-none text-base">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+						<path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+					</svg>
+					{ i18n.T(i18n.GetLang(ctx), "error.back_home") }
+				</a>
 			</div>
 		</div>
 	}

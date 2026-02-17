@@ -1,0 +1,10 @@
+services:
+  mercato:
+    build: .
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DB_PATH=/app/data/mercato.db
+    restart: unless-stopped

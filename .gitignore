@@ -1,0 +1,10 @@
+/bin/
+/data/
+/data/
+*.db
+*.db-journal
+*.exe
+/tmp/
+.env
+.DS_Store
+mercato

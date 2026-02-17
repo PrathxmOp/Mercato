@@ -8,6 +8,10 @@ package layout
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import (
+	"github.com/prathxm/mercato/internal/i18n"
+)
+
 func Base(title string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -29,20 +33,20 @@ func Base(title string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><meta name=\"theme-color\" content=\"#4f46e5\"><title>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\" class=\"transition-colors duration-300\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><meta name=\"theme-color\" content=\"#4f46e5\"><title>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/layout/base.templ`, Line: 10, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/layout/base.templ`, Line: 14, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Mercato</title><script src=\"https://unpkg.com/htmx.org@2.0.3\"></script><script src=\"https://unpkg.com/htmx-ext-ws@2.0.1/ws.js\"></script><script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script></head><body class=\"bg-[#f8fafc] text-slate-900 flex flex-col min-h-screen font-sans selection:bg-indigo-100 selection:text-indigo-700\"><!-- Subtle Background Decoration --><div class=\"fixed inset-0 -z-10 overflow-hidden pointer-events-none\" aria-hidden=\"true\"><div class=\"absolute -top-[10%] -left-[10%] w-[60%] h-[60%] sm:w-[40%] sm:h-[40%] rounded-full bg-indigo-50/60 blur-[120px]\"></div><div class=\"absolute top-[30%] -right-[10%] w-[50%] h-[50%] sm:w-[30%] sm:h-[30%] rounded-full bg-emerald-50/50 blur-[100px]\"></div></div><!-- Header --><header class=\"bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-50\"><div class=\"container mx-auto px-4 sm:px-6 h-[60px] flex items-center justify-between\"><a href=\"/\" class=\"flex items-center gap-2 group\" aria-label=\"Mercato home\"><div class=\"bg-indigo-600 p-1.5 rounded-lg shadow-lg shadow-indigo-200/60 group-hover:shadow-indigo-200 transition-shadow\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4 text-white\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\" d=\"M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z\"></path></svg></div><span class=\"text-lg font-black text-slate-900 tracking-tight\">Mercato</span></a></div></header><!-- Main content --><main class=\"flex-grow container mx-auto px-4 sm:px-6 py-6 sm:py-10\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Mercato</title><script src=\"https://unpkg.com/htmx.org@2.0.3\"></script><script src=\"https://unpkg.com/htmx-ext-ws@2.0.1/ws.js\"></script><script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script><script defer src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js\"></script><script>\n\t\t\t\t// Standard system theme detection\n\t\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t\t}\n\t\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {\n\t\t\t\t\tif (e.matches) document.documentElement.classList.add('dark');\n\t\t\t\t\telse document.documentElement.classList.remove('dark');\n\t\t\t\t});\n\t\t\t</script></head><body class=\"bg-[#f8fafc] text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col min-h-screen font-sans selection:bg-blue-100 dark:selection:bg-blue-900/40 selection:text-blue-700 dark:selection:text-blue-300 transition-colors duration-300\"><!-- Subtle Background Decoration --><div class=\"fixed inset-0 -z-10 overflow-hidden pointer-events-none\" aria-hidden=\"true\"><div class=\"absolute -top-[10%] -left-[10%] w-[60%] h-[60%] sm:w-[40%] sm:h-[40%] rounded-full bg-blue-400/60 dark:bg-blue-900/10 blur-[120px]\"></div><div class=\"absolute top-[30%] -right-[10%] w-[50%] h-[50%] sm:w-[30%] sm:h-[30%] rounded-full bg-emerald-50/50 dark:bg-emerald-900/10 blur-[100px]\"></div></div><!-- Header --><header class=\"bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800/60 sticky top-0 z-50\"><div class=\"container mx-auto px-4 sm:px-6 h-[60px] flex items-center justify-between\"><a href=\"/\" class=\"flex items-center gap-2 group\" aria-label=\"Mercato home\"><div class=\"bg-blue-600 p-1.5 rounded-lg shadow-lg shadow-blue-200/60 dark:shadow-none group-hover:shadow-blue-200 dark:group-hover:bg-blue-500 transition-all\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4 text-white\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"3\" d=\"M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z\"></path></svg></div><span class=\"text-lg font-black text-slate-900 dark:text-white tracking-tight\">Mercato</span></a></div></header><!-- Main content --><main class=\"flex-grow container mx-auto px-4 sm:px-6 py-6 sm:py-10\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -50,7 +54,33 @@ func Base(title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</main><!-- Footer --><footer class=\"bg-white border-t border-slate-100 py-8 mt-12\"><div class=\"container mx-auto px-4 sm:px-6 text-center\"><p class=\"text-slate-300 text-xs font-semibold\">&copy; 2026 Mercato. All rights reserved.</p><div class=\"mt-3 flex items-center justify-center gap-2\"><span class=\"h-px w-6 bg-slate-100\"></span><p class=\"text-[10px] font-black text-slate-200 uppercase tracking-widest\">Built with Passion</p><span class=\"h-px w-6 bg-slate-100\"></span></div></div></footer></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</main><!-- Footer --><footer class=\"bg-white dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800/50 py-8 mt-12 transition-colors duration-300\"><div class=\"container mx-auto px-4 sm:px-6 text-center\"><p class=\"text-slate-300 dark:text-slate-600 text-xs font-semibold\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(i18n.T(i18n.GetLang(ctx), "footer.rights"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/layout/base.templ`, Line: 60, Col: 117}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p><div class=\"mt-3 flex items-center justify-center gap-2\"><span class=\"h-px w-6 bg-slate-100 dark:bg-slate-800\"></span><p class=\"text-[10px] font-black text-slate-200 dark:text-slate-700 uppercase tracking-widest\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(i18n.T(i18n.GetLang(ctx), "footer.built_with"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `view/layout/base.templ`, Line: 63, Col: 149}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</p><span class=\"h-px w-6 bg-slate-100 dark:bg-slate-800\"></span></div></div></footer></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
