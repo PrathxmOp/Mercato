@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -16,25 +16,26 @@ const langKey contextKey = "lang"
 
 var (
 	translations = make(map[string]map[string]interface{})
-	localesDir   = "locales"
 	mu           sync.RWMutex
 )
 
-// Init loads all JSON files from the locales directory
-func Init(dir string) error {
+// Init loads all JSON files from the provided filesystem
+func Init(f fs.FS) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	localesDir = dir
-	files, err := ioutil.ReadDir(localesDir)
+	// Clear existing translations if any
+	translations = make(map[string]map[string]interface{})
+
+	files, err := fs.ReadDir(f, ".")
 	if err != nil {
 		return err
 	}
 
-	for _, f := range files {
-		if filepath.Ext(f.Name()) == ".json" {
-			lang := strings.TrimSuffix(f.Name(), ".json")
-			data, err := ioutil.ReadFile(filepath.Join(localesDir, f.Name()))
+	for _, file := range files {
+		if !file.IsDir() && filepath.Ext(file.Name()) == ".json" {
+			lang := strings.TrimSuffix(file.Name(), ".json")
+			data, err := fs.ReadFile(f, file.Name())
 			if err != nil {
 				return err
 			}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"strconv"
@@ -41,8 +42,8 @@ func NewHandlers(database *db.DB, hub *ws.Hub) *Handlers {
 	return &Handlers{DB: database, Hub: hub}
 }
 
-func InitI18n(dir string) error {
-	return i18n.Init(dir)
+func InitI18n(f fs.FS) error {
+	return i18n.Init(f)
 }
 
 func GetLang(ctx context.Context) string {

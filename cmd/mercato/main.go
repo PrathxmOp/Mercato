@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/prathxm/mercato/internal/db"
 	"github.com/prathxm/mercato/internal/handlers"
 	"github.com/prathxm/mercato/internal/ws"
+	"github.com/prathxm/mercato/locales"
 )
 
 func main() {
@@ -100,19 +102,23 @@ func main() {
 	
 	// Initialize i18n
 	localesPath := os.Getenv("LOCALES_PATH")
-	if localesPath == "" {
-		// Try ./locales first
+	var i18nFS fs.FS
+
+	if localesPath != "" {
+		i18nFS = os.DirFS(localesPath)
+	} else {
+		// Try ./locales first (for dev)
 		if _, err := os.Stat("./locales"); err == nil {
-			localesPath = "./locales"
-		} else if _, err := os.Stat("../locales"); err == nil {
-			// Fallback to parent dir (common if running from bin/)
-			localesPath = "../locales"
+			i18nFS = os.DirFS("./locales")
 		} else {
-			localesPath = "./locales" // Default to current dir if neither found
+			// Fallback to embedded locales
+			i18nFS = locales.FS
+			slog.Info("Using embedded locales")
 		}
 	}
-	if err := handlers.InitI18n(localesPath); err != nil {
-		slog.Error("Failed to initialize i18n", "err", err, "path", localesPath)
+
+	if err := handlers.InitI18n(i18nFS); err != nil {
+		slog.Error("Failed to initialize i18n", "err", err)
 	}
 
 	mux := http.NewServeMux()
