@@ -24,7 +24,15 @@ Mercato is a modern, real-time shopping list application designed for families a
 
 ## Quick Start 🚀
 
-### Using Docker (Recommended)
+### Binary (Easiest)
+
+1. Download the latest binary for your OS from the [Releases](https://github.com/PrathxmOp/Mercato/releases) page.
+2. Grant execution permissions: `chmod +x mercato_Linux_x86_64` (on Linux/macOS).
+3. Run it: `./mercato_Linux_x86_64`
+
+The application will be available at `http://localhost:8082`.
+
+### Using Docker
 
 ```bash
 docker-compose up --build
